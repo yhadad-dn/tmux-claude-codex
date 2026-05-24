@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Local user config — never commit secrets or per-user overrides
+.env
+.env.local
+work.conf
+
+# Logs
+*.log

@@ -1,0 +1,54 @@
+# tmux-claude-codex configuration — copy to ~/.work.conf and edit.
+#
+# All values are optional. Anything you don't set keeps its built-in default
+# (matching the README's default layout).
+#
+# This file is sourced by `work` at startup, so it's just bash syntax.
+
+# --- where to work ------------------------------------------------------------
+
+# Path to the repo you want the panes to start in.
+# All 4 panes will `cd` here on launch.
+WORK_REPO="$HOME/research/my-repo"
+
+# Relative path (from $WORK_REPO) to a Python venv activate script.
+# Sourced silently in every pane; ignored if the file doesn't exist.
+WORK_VENV=".venv/bin/activate"
+
+# tmux session name — change if you want multiple parallel workspaces.
+WORK_SESSION="work"
+
+# --- per-pane tools -----------------------------------------------------------
+#
+# Layout:
+#   pane 0 = top-left     pane 1 = top-right
+#   pane 2 = bottom-left  pane 3 = bottom-right
+#
+# Set _CMD to "" to leave a pane as a blank shell.
+
+WORK_PANE_0_CMD="claude --permission-mode acceptEdits"
+WORK_PANE_0_TITLE="claude"
+
+WORK_PANE_1_CMD="lazygit"
+WORK_PANE_1_TITLE="git"
+
+WORK_PANE_2_CMD="codex"
+WORK_PANE_2_TITLE="codex"
+
+WORK_PANE_3_CMD=""
+WORK_PANE_3_TITLE="files"
+
+# --- recipes ------------------------------------------------------------------
+#
+# Replace codex with aider:
+#   WORK_PANE_2_CMD="aider --model gpt-4-turbo"
+#   WORK_PANE_2_TITLE="aider"
+#
+# Replace lazygit with gitui:
+#   WORK_PANE_1_CMD="gitui"
+#
+# All blank shells:
+#   WORK_PANE_0_CMD=""
+#   WORK_PANE_1_CMD=""
+#   WORK_PANE_2_CMD=""
+#   WORK_PANE_3_CMD=""

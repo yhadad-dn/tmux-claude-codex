@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# tmux-claude-codex — 4-pane tmux workspace builder.
+#
+# Builds (or attaches to) a tmux session with four panes in a 2x2 grid:
+#
+#   ┌── claude ─────────────┬── git ─────────────┐
+#   │   AI coding agent     │   lazygit          │
+#   ├── codex ──────────────┼── files ───────────┤
+#   │   review / 2nd LLM    │   scratch shell    │
+#   └───────────────────────┴────────────────────┘
+#
+# Configuration order (later overrides earlier):
+#   1. Defaults (this file)
+#   2. ~/.work.conf if present (sourced as shell)
+#   3. Environment variables exported in the calling shell
+#
+# Source: https://github.com/yhadad-dn/tmux-claude-codex
+
+set -euo pipefail
+
+# --- defaults -----------------------------------------------------------------
+WORK_SESSION_DEFAULT="work"
+WORK_REPO_DEFAULT="$HOME"
+WORK_VENV_DEFAULT=".venv/bin/activate"
+WORK_PANE_0_CMD_DEFAULT="claude --permission-mode acceptEdits"
+WORK_PANE_0_TITLE_DEFAULT="claude"
+WORK_PANE_1_CMD_DEFAULT="lazygit"
+WORK_PANE_1_TITLE_DEFAULT="git"
+WORK_PANE_2_CMD_DEFAULT="codex"
+WORK_PANE_2_TITLE_DEFAULT="codex"
+WORK_PANE_3_CMD_DEFAULT=""
+WORK_PANE_3_TITLE_DEFAULT="files"
+
+# --- load ~/.work.conf if present --------------------------------------------
+if [[ -f "$HOME/.work.conf" ]]; then
+    # shellcheck disable=SC1091
+    source "$HOME/.work.conf"
+fi
+
+# --- resolve effective values (env > conf > default) -------------------------
+WORK_SESSION="${WORK_SESSION:-$WORK_SESSION_DEFAULT}"
+WORK_REPO="${WORK_REPO:-$WORK_REPO_DEFAULT}"
+WORK_VENV="${WORK_VENV:-$WORK_VENV_DEFAULT}"
+WORK_PANE_0_CMD="${WORK_PANE_0_CMD-$WORK_PANE_0_CMD_DEFAULT}"
+WORK_PANE_0_TITLE="${WORK_PANE_0_TITLE:-$WORK_PANE_0_TITLE_DEFAULT}"
+WORK_PANE_1_CMD="${WORK_PANE_1_CMD-$WORK_PANE_1_CMD_DEFAULT}"
+WORK_PANE_1_TITLE="${WORK_PANE_1_TITLE:-$WORK_PANE_1_TITLE_DEFAULT}"
+WORK_PANE_2_CMD="${WORK_PANE_2_CMD-$WORK_PANE_2_CMD_DEFAULT}"
+WORK_PANE_2_TITLE="${WORK_PANE_2_TITLE:-$WORK_PANE_2_TITLE_DEFAULT}"
+WORK_PANE_3_CMD="${WORK_PANE_3_CMD-$WORK_PANE_3_CMD_DEFAULT}"
+WORK_PANE_3_TITLE="${WORK_PANE_3_TITLE:-$WORK_PANE_3_TITLE_DEFAULT}"
+
+# --- attach if session already running ---------------------------------------
+if tmux has-session -t "$WORK_SESSION" 2>/dev/null; then
+    exec tmux attach -t "$WORK_SESSION"
+fi
+
+# --- build fresh session ------------------------------------------------------
+if [[ ! -d "$WORK_REPO" ]]; then
+    echo "warning: WORK_REPO does not exist: $WORK_REPO" >&2
+    echo "         set it in ~/.work.conf or export WORK_REPO before running." >&2
+fi
+
+tmux new-session -d -s "$WORK_SESSION" -c "$WORK_REPO" -x 220 -y 60
+
+# 2x2 layout: split vertical → split each half horizontal → tiled
+tmux split-window -v -t "$WORK_SESSION":0.0 -c "$WORK_REPO"
+tmux split-window -h -t "$WORK_SESSION":0.1 -c "$WORK_REPO"
+tmux split-window -h -t "$WORK_SESSION":0.0 -c "$WORK_REPO"
+tmux select-layout -t "$WORK_SESSION":0 tiled
+
+# Pane titles (shown in pane border via tmux.conf's pane-border-status)
+tmux select-pane -t "$WORK_SESSION":0.0 -T "$WORK_PANE_0_TITLE"
+tmux select-pane -t "$WORK_SESSION":0.1 -T "$WORK_PANE_1_TITLE"
+tmux select-pane -t "$WORK_SESSION":0.2 -T "$WORK_PANE_2_TITLE"
+tmux select-pane -t "$WORK_SESSION":0.3 -T "$WORK_PANE_3_TITLE"
+
+# Activate venv (if present) and launch the configured command in each pane
+ACTIVATE="source $WORK_VENV 2>/dev/null; clear"
+launch_pane() {
+    local pane="$1" cmd="$2"
+    if [[ -n "$cmd" ]]; then
+        tmux send-keys -t "$WORK_SESSION":0."$pane" "$ACTIVATE && $cmd" C-m
+    else
+        tmux send-keys -t "$WORK_SESSION":0."$pane" "$ACTIVATE" C-m
+    fi
+}
+launch_pane 0 "$WORK_PANE_0_CMD"
+launch_pane 1 "$WORK_PANE_1_CMD"
+launch_pane 2 "$WORK_PANE_2_CMD"
+launch_pane 3 "$WORK_PANE_3_CMD"
+
+tmux select-pane -t "$WORK_SESSION":0.0
+exec tmux attach -t "$WORK_SESSION"
