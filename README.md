@@ -10,6 +10,21 @@ to survive laptop sleep / disconnect / network drops (tmux persists everything).
 
 ## What it looks like
 
+![Four-pane workspace — Claude Code (top-left), Git/lazygit (top-right), Codex (bottom-left), Files/scratch (bottom-right)](docs/workspace.png)
+
+> **Top-left — Claude Code**: the AI coding agent writing files, running tests, dispatching subagents.
+> **Top-right — Git**: `lazygit` showing live status, modified files, diff hunks, branches.
+> **Bottom-left — Codex**: OpenAI's CLI as an independent reviewer / second-opinion LLM.
+> **Bottom-right — Files**: scratch shell with your venv active — for `pytest`, `bat`, `rg`, `glow`, anything else.
+
+All four panes live in a single tmux session on your dev VM. Switch focus with
+`Ctrl-b ←/→/↑/↓` or by clicking. Zoom a pane to fullscreen with `Ctrl-b z`
+(toggle). Detach with `Ctrl-b d` and reconnect later with `start`.
+
+### Pure-terminal preview
+
+For `cat README.md` or `glow` in a terminal where the PNG won't render:
+
 ```
 ┌── claude ─────────────────────────┬── git ───────────────────────────┐
 │                                   │  ┌─ Status ─┐┌─ Files ─────────┐ │
@@ -30,9 +45,6 @@ to survive laptop sleep / disconnect / network drops (tmux persists everything).
 │     2. line 158: r_kv should…     │  (typing surface for you)        │
 └───────────────────────────────────┴──────────────────────────────────┘
 ```
-
-Switch panes with `Ctrl-b ←/→/↑/↓` or by clicking. Zoom a pane to fullscreen
-with `Ctrl-b z` (toggle). Detach with `Ctrl-b d` and reconnect with `start`.
 
 ## Quick start
 
